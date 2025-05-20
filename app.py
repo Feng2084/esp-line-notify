@@ -1,7 +1,7 @@
 from flask import Flask, request
 import os
 import requests
-
+import json
 app = Flask(__name__)
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
@@ -24,3 +24,13 @@ def notify():
     message = request.form.get("message", "ESP8266 發來通知")
     send_line_message(message)
     return "OK"
+
+@app.route('/', methods=['GET'])
+def home():
+    return 'LINE Bot is running!'
+
+@app.route('/callback', methods=['POST'])
+def callback():
+    body = request.get_data(as_text=True)
+    print("Webhook Body:\n", body)  # 你部署後可以改成儲存到檔案或回傳
+    return 'OK'
