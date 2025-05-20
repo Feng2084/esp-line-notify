@@ -31,6 +31,5 @@ def home():
 
 @app.route('/callback', methods=['POST'])
 def callback():
-    body = request.get_data(as_text=True)
-    print("Webhook Body:\n", body)  # 你部署後可以改成儲存到檔案或回傳
-    return 'OK'
+    body = request.get_json()
+    return json.dumps(body), 200  # 回傳原始 JSON
