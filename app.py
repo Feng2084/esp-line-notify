@@ -1,35 +1,60 @@
 from flask import Flask, request
+from linebot import LineBotApi, WebhookParser
+from linebot.models import TextSendMessage
+from dotenv import load_dotenv
 import os
-import requests
 import json
+
+# 載入 .env 檔案
+load_dotenv()
+
+# 建立 Flask 應用
 app = Flask(__name__)
 
+# 初始化 LINE Bot
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
-LINE_USER_ID = os.getenv("LINE_USER_ID")
+LINE_GROUP_ID = os.getenv("LINE_GROUP_ID")
+line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
-def send_line_message(message):
-    url = "https://api.line.me/v2/bot/message/push"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
-    }
-    data = {
-        "to": LINE_USER_ID,
-        "messages": [{"type": "text", "text": message}]
-    }
-    requests.post(url, headers=headers, json=data)
-
-@app.route("/esp_notify", methods=["POST"])
-def notify():
-    message = request.form.get("message", "ESP8266 發來通知")
-    send_line_message(message)
-    return "OK"
-
-@app.route('/', methods=['GET'])
+# 首頁測試
+@app.route("/", methods=["GET"])
 def home():
-    return 'LINE Bot is running!'
+    return "LINE Bot is running!"
 
-@app.route('/callback', methods=['POST'])
+# 📡 用於接收 LINE webhook，抓取群組 ID
+@app.route("/callback", methods=["POST"])
 def callback():
-    body = request.get_json()
-    return json.dumps(body), 200  # 回傳原始 JSON
+    body = request.get_data(as_text=True)
+    print("Webhook 收到資料：\n", body)
+
+    # 建議可以將 webhook 資料儲存下來以便取得群組 ID
+    try:
+        data = json.loads(body)
+        if "events" in data and len(data["events"]) > 0:
+            source = data["events"][0].get("source", {})
+            if source.get("type") == "group":
+                group_id = source.get("groupId")
+                print("📌 群組 ID：", group_id)
+    except Exception as e:
+        print("解析 webhook 資料失敗:", e)
+
+    return "OK", 200
+
+# 📟 提供 ESP8266 使用的路由，收到後發送 LINE 通知
+@app.route("/alert", methods=["POST"])
+def alert():
+    try:
+        data = request.get_json()
+        pin = data.get("pin")
+        status = data.get("status")
+
+        msg = f"⚠️ 偵測到腳位 {pin} 為 {status}"
+        line_bot_api.push_message(LINE_GROUP_ID, TextSendMessage(text=msg))
+        return "通知已發送", 200
+    except Exception as e:
+        print("錯誤:", e)
+        return "錯誤", 500
+
+# Flask 啟動點（本地測試用）
+if __name__ == "__main__":
+    app.run(debug=True)
