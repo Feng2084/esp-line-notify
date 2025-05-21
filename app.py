@@ -4,7 +4,7 @@ from linebot.models import TextSendMessage
 from dotenv import load_dotenv
 import os
 import json
-
+from datetime import datetime
 # 載入 .env 檔案
 load_dotenv()
 
@@ -47,8 +47,9 @@ def alert():
         data = request.get_json()
         pin = data.get("pin")
         status = data.get("status")
+        time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        msg = f"⚠️ 偵測到腳位 {pin} 為 {status}"
+        msg = ff"⚠️ 偵測器觸發！\n設備：{pin}\n狀態：{status}\n🕒 時間：{time_str}"
         line_bot_api.push_message(LINE_GROUP_ID, TextSendMessage(text=msg))
         return "通知已發送", 200
     except Exception as e:
