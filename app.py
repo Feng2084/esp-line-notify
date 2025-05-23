@@ -55,6 +55,28 @@ def alert():
     except Exception as e:
         print("錯誤:", e)
         return "錯誤", 500
+# 🔄 接收 ESP8266 上傳的狀態報告
+device_status = {}  # 記錄最近一次上傳狀態
+
+@app.route("/status-update", methods=["POST"])
+def status_update():
+    try:
+        data = request.get_json()
+        status_data = data.get("status")
+
+        if not status_data:
+            return {"error": "No status provided"}, 400
+
+        # 儲存狀態
+        global device_status
+        device_status = status_data
+
+        print("📡 接收到 ESP8266 狀態：", device_status)
+        return {"message": "狀態已更新"}, 200
+
+    except Exception as e:
+        print("⚠️ 處理 /status-update 錯誤:", e)
+        return {"error": "內部錯誤"}, 500
 
 # Flask 啟動點（本地測試用）
 if __name__ == "__main__":
