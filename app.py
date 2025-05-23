@@ -24,21 +24,28 @@ def home():
 # 📡 用於接收 LINE webhook，抓取群組 ID
 @app.route("/callback", methods=["POST"])
 def callback():
-    body = request.get_data(as_text=True)
-    print("Webhook 收到資料：\n", body)
+    body = request.get_json()
+    events = body.get("events", [])
 
-    # 建議可以將 webhook 資料儲存下來以便取得群組 ID
-    try:
-        data = json.loads(body)
-        if "events" in data and len(data["events"]) > 0:
-            source = data["events"][0].get("source", {})
-            if source.get("type") == "group":
-                group_id = source.get("groupId")
-                print("📌 群組 ID：", group_id)
-    except Exception as e:
-        print("解析 webhook 資料失敗:", e)
+    for event in events:
+        if event["type"] == "message" and event["message"]["type"] == "text":
+            user_msg = event["message"]["text"].strip()
 
-    return "OK", 200
+            if user_msg == "查詢目前狀態":
+                if not device_status:
+                    reply = "目前沒有任何裝置狀態資料。"
+                else:
+                    msg_lines = ["📋 目前 ESP8266 腳位狀態："]
+                    for pin, val in device_status.items():
+                        msg_lines.append(f"{pin}：{val}")
+                    reply = "\n".join(msg_lines)
+
+                line_bot_api.reply_message(
+                    event["replyToken"],
+                    TextSendMessage(text=reply)
+                )
+
+    return "OK"
 
 # 📟 提供 ESP8266 使用的路由，收到後發送 LINE 通知
 @app.route("/alert", methods=["POST"])
