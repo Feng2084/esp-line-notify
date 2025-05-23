@@ -55,6 +55,7 @@ def alert():
     except Exception as e:
         print("錯誤:", e)
         return "錯誤", 500
+        
 # 🔄 接收 ESP8266 上傳的狀態報告
 device_status = {}  # 記錄最近一次上傳狀態
 
@@ -72,7 +73,16 @@ def status_update():
         device_status = status_data
 
         print("📡 接收到 ESP8266 狀態：", device_status)
-        return {"message": "狀態已更新"}, 200
+
+        # ✅ 發送 LINE 通知（開機 or 主動上傳）
+        msg_lines = ["🔔 ESP8266 裝置上線，當前腳位狀態："]
+        for pin, val in device_status.items():
+            msg_lines.append(f"{pin}：{val}")
+        message = "\n".join(msg_lines)
+
+        line_bot_api.push_message(LINE_GROUP_ID, TextSendMessage(text=message))
+
+        return {"message": "狀態已更新並通知"}, 200
 
     except Exception as e:
         print("⚠️ 處理 /status-update 錯誤:", e)
