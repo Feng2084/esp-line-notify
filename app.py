@@ -56,7 +56,7 @@ def alert():
         status = data.get("status")
         time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        msg = f"⚠️ 偵測器觸發！\n設備：{pin}\n狀態：{status}\n🕒 時間：{time_str}"
+        msg = f"🔴🔴🔴🔴🔴 偵測器觸發‼️‼️‼️‼️\n設備：{pin}\n狀態：{status}\n🕒 時間：{time_str}"
         line_bot_api.push_message(LINE_GROUP_ID, TextSendMessage(text=msg))
         return "通知已發送", 200
     except Exception as e:
