@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import os
 import json
 from datetime import datetime
+import pytz
 # 載入 .env 檔案
 load_dotenv()
 
@@ -54,8 +55,11 @@ def alert():
         data = request.get_json()
         pin = data.get("pin")
         status = data.get("status")
-        time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+        # 取得當下 UTC 時間
+        utc_now = datetime.now(pytz.utc)
+        taipei_tz = pytz.timezone('Asia/Taipei')
+        taipei_time = utc_now.astimezone(taipei_tz)
+        time_str = taipei_time.strftime("%Y-%m-%d %H:%M:%S")
         msg = f"🔴🔴🔴🔴🔴 偵測器觸發‼️‼️‼️‼️\n設備：{pin}\n狀態：{status}\n🕒 時間：{time_str}"
         line_bot_api.push_message(LINE_GROUP_ID, TextSendMessage(text=msg))
         return "通知已發送", 200
