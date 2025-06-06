@@ -60,7 +60,7 @@ def alert():
         taipei_tz = pytz.timezone('Asia/Taipei')
         taipei_time = utc_now.astimezone(taipei_tz)
         time_str = taipei_time.strftime("%Y-%m-%d %H:%M:%S")
-        msg = f"🔴🔴🔴🔴🔴 {pin}{status}‼️‼️‼️‼️\n設備：{pin}\n狀態：{status}\n🕒 時間：{time_str}"
+        msg = f"🔴🔴🔴🔴🔴 {pin}‼️‼️‼️‼️\n設備：{pin}\n狀態：{status}\n🕒 時間：{time_str}"
         line_bot_api.push_message(LINE_GROUP_ID, TextSendMessage(text=msg))
         return "通知已發送", 200
     except Exception as e:
