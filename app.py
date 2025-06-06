@@ -34,9 +34,9 @@ def callback():
 
             if user_msg == "查詢目前狀態":
                 if not device_status:
-                    reply = "目前沒有任何裝置狀態資料。"
+                    reply = "目前沒有任何狀態資料。"
                 else:
-                    msg_lines = ["📋 目前 ESP8266 腳位狀態："]
+                    msg_lines = ["📋 目前 廣播運作 狀態："]
                     for pin, val in device_status.items():
                         msg_lines.append(f"{pin}：{val}")
                     reply = "\n".join(msg_lines)
@@ -86,7 +86,7 @@ def status_update():
         print("📡 接收到 ESP8266 狀態：", device_status)
 
         # ✅ 發送 LINE 通知（開機 or 主動上傳）
-        msg_lines = ["🔔 ESP8266 裝置上線，當前腳位狀態："]
+        msg_lines = ["🔔 IO介面卡 裝置上線，當前運作狀態："]
         for pin, val in device_status.items():
             msg_lines.append(f"{pin}：{val}")
         message = "\n".join(msg_lines)
