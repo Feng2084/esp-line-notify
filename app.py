@@ -67,37 +67,6 @@ def alert():
         print("錯誤:", e)
         return "錯誤", 500
         
-# 🔄 接收 ESP8266 上傳的狀態報告
-device_status = {}  # 記錄最近一次上傳狀態
-
-@app.route("/status-update", methods=["POST"])
-def status_update():
-    try:
-        data = request.get_json()
-        status_data = data.get("status")
-
-        if not status_data:
-            return {"error": "No status provided"}, 400
-
-        # 儲存狀態
-        global device_status
-        device_status = status_data
-
-        print("📡 接收到 ESP8266 狀態：", device_status)
-
-        # ✅ 發送 LINE 通知（開機 or 主動上傳）
-        msg_lines = ["🔔 IO介面卡 裝置上線，當前運作狀態："]
-        for pin, val in device_status.items():
-            msg_lines.append(f"{pin}：{val}")
-        message = "\n".join(msg_lines)
-
-        line_bot_api.push_message(LINE_GROUP_ID, TextSendMessage(text=message))
-
-        return {"message": "狀態已更新並通知"}, 200
-
-    except Exception as e:
-        print("⚠️ 處理 /status-update 錯誤:", e)
-        return {"error": "內部錯誤"}, 500
 
 @app.route("/ping", methods=["POST"])
 def ping():
