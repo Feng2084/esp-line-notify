@@ -99,6 +99,10 @@ def status_update():
         print("⚠️ 處理 /status-update 錯誤:", e)
         return {"error": "內部錯誤"}, 500
 
+@app.route("/ping", methods=["POST"])
+def ping():
+    return {"message": "pong"}, 200
+
 # Flask 啟動點（本地測試用）
 if __name__ == "__main__":
     app.run(debug=True)
