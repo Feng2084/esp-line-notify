@@ -17,6 +17,15 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_GROUP_ID = os.getenv("LINE_GROUP_ID")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
+def is_weekend_taiwan():
+    tz = pytz.timezone('Asia/Taipei')
+    now = datetime.now(tz)
+    weekday = now.weekday()  # 0 = Monday, 6 = Sunday
+
+    # 5 = Saturday, 6 = Sunday
+    return weekday >= 5
+
+
 # 首頁測試
 @app.route("/", methods=["GET"])
 def home():
@@ -61,7 +70,10 @@ def alert():
         taipei_time = utc_now.astimezone(taipei_tz)
         time_str = taipei_time.strftime("%Y-%m-%d %H:%M:%S")
         msg = f"🔴🔴🔴🔴🔴 {pin}‼️‼️‼️‼️\n設備：{pin}\n狀態：{status}\n🕒 時間：{time_str}"
-        line_bot_api.push_message(LINE_GROUP_ID, TextSendMessage(text=msg))
+        if is_weekend_taiwan():
+            line_bot_api.push_message(LINE_GROUP_ID, TextSendMessage(text=msg))
+        else:
+            print("[INFO] 平日接收到 ESP 訊號，但不發 LINE")
         return "通知已發送", 200
     except Exception as e:
         print("錯誤:", e)
