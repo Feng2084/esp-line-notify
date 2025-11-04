@@ -6,6 +6,7 @@ import os
 import json
 from datetime import datetime
 import pytz
+import requests
 # 載入 .env 檔案
 load_dotenv()
 
@@ -17,13 +18,62 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_GROUP_ID = os.getenv("LINE_GROUP_ID")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
-def is_weekend_taiwan():
-    tz = pytz.timezone('Asia/Taipei')
-    now = datetime.now(tz)
-    weekday = now.weekday()  # 0 = Monday, 6 = Sunday
+tz = pytz.timezone("Asia/Taipei")
 
-    # 5 = Saturday, 6 = Sunday
-    return weekday >= 5
+HOLIDAY_CACHE = {
+    "date": None,
+    "holidays": set()
+}
+
+def fetch_taiwan_holidays():
+    """抓台灣官方國定假日（自動快取）"""
+
+    global HOLIDAY_CACHE
+    today = datetime.now(tz).date()
+
+    # ✅ 今日已有快取 → 直接用
+    if HOLIDAY_CACHE["date"] == today:
+        return HOLIDAY_CACHE["holidays"]
+
+    year = today.year
+    url = f"https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/{year}.json"
+
+    try:
+        print(f"[INFO] Fetching Taiwan holidays for {year}")
+        r = requests.get(url, timeout=5)
+        r.raise_for_status()
+
+        data = r.json()
+        holidays = { datetime.strptime(day["date"], "%Y-%m-%d").date()
+                     for day in data if day.get("isHoliday") }
+
+        HOLIDAY_CACHE["date"] = today
+        HOLIDAY_CACHE["holidays"] = holidays
+
+        print(f"[INFO] Loaded {len(holidays)} holidays.")
+
+        return holidays
+
+    except Exception as e:
+        print("[WARN] Failed to fetch holidays:", e)
+        return HOLIDAY_CACHE["holidays"]   # fallback
+
+
+def is_tw_holiday_or_weekend():
+    """判斷台灣國定假日或週末"""
+
+    now = datetime.now(tz)
+    today = now.date()
+
+    # ✅ 國定假日
+    if today in fetch_taiwan_holidays():
+        return True
+
+    # ✅ 週末
+    if now.weekday() >= 5:
+        return True
+
+    return False
 
 
 # 首頁測試
@@ -70,7 +120,7 @@ def alert():
         taipei_time = utc_now.astimezone(taipei_tz)
         time_str = taipei_time.strftime("%Y-%m-%d %H:%M:%S")
         msg = f"🔴🔴🔴🔴🔴 {pin}‼️‼️‼️‼️\n設備：{pin}\n狀態：{status}\n🕒 時間：{time_str}"
-        if is_weekend_taiwan():
+        if is_tw_holiday_or_weekend():
             line_bot_api.push_message(LINE_GROUP_ID, TextSendMessage(text=msg))
         else:
             print("[INFO] 平日接收到 ESP 訊號，但不發 LINE")
