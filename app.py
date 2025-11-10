@@ -44,7 +44,7 @@ def fetch_taiwan_holidays():
         r.raise_for_status()
 
         data = r.json()
-        holidays = { datetime.strptime(day["date"], "%Y-%m-%d").date()
+        holidays = { datetime.strptime(day["date"], "%Y%m%d").date()
                      for day in data if day.get("isHoliday") }
 
         HOLIDAY_CACHE["date"] = today
